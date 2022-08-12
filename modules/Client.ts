@@ -129,7 +129,21 @@ class CalledClient implements DefaultClient {
     //관리자
     this.control = [this.admin];
   }
-  connect: any;
+  async connect() {
+    try {
+      this.client.connect();
+      this.client.on(
+        "message",
+        async (channel: any, tags: any, message: string, self: string) => {
+          if (self) return;
+          this.checkNonDefaultMessages(channel, tags, message, self);
+          this.checkChatting(channel, tags, message, self);
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   async checkNonDefaultMessages(
     channel: any,
@@ -140,36 +154,10 @@ class CalledClient implements DefaultClient {
     if (message?.trim() === "isConnect") {
       this.client.say(channel, `연결 되었어요`);
     }
-    //
-    if (message.includes("shell") && this.control.includes(tags.username)) {
-      try {
-        const splited = message.split(" ");
-        if (splited) {
-          splited.splice(0, 1);
-          if (shell[splited[0]]) {
-            const { stdout, stderr, code } = shell[splited[0]](
-              splited.slice(1).join(" ")
-            );
-            if (stderr)
-              this.client.say(channel, `${decodeURIComponent(stderr)}`);
-            if (stdout) this.client.say(channel, decodeURIComponent(stdout));
-          }
-        }
-      } catch (error: unknown) {
-        this.client.say(channel, `${error as Error}`);
-      }
-    } else if (
-      message.includes("shell") &&
-      !this.control.includes(tags.username)
-    ) {
-      this.client.say(channel, `권한이 없어요 :(`);
-    }
+    //추가적인 명령어
   }
   async checkChatting(channel: any, tags: any, message: string, self: string) {
-    if (message === "test") {
-      return true;
-    }
-
+    //twitch api 명령어
     return false;
   }
 }
